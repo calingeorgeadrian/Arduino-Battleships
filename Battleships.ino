@@ -848,6 +848,7 @@ struct player {
   ship* ships;
   bool isReady;
   bool pressedStart;
+  bool wantsToRestart;
   int X_PIN;
   int Y_PIN;
   int PLACE_PIN;
@@ -864,11 +865,11 @@ struct player {
   int lastRotateBtnState;
 };
 
-int imageLine1stPlayer = 0;
-int imageLine2ndPlayer = 0;
-int turn = 1;
-bool playersPressedStart = false;
-bool gameStarted = false;
+int imageLine1stPlayer;
+int imageLine2ndPlayer;
+int turn;
+bool playersPressedStart;
+bool gameStarted;
 int period = 250;
 unsigned long delay1stPlayer = 0;
 unsigned long delay2ndPlayer = 0;
@@ -879,11 +880,18 @@ player player1, player2;
 ship nava;
 
 void initiateGame() {
+  imageLine1stPlayer = 0;
+  imageLine2ndPlayer = 0;
+  turn = 1;
+  playersPressedStart = false;
+  gameStarted = false;
+
   // creez jucatorul
   player1.shipsNumber = 4;
   player1.shipsLeftToPlace = 4;
   player1.isReady = false;
   player1.pressedStart = false;
+  player1.wantsToRestart = false;
   player1.X_PIN = X_PIN1;
   player1.Y_PIN = Y_PIN1;
   player1.PLACE_PIN = PLACING_PIN1;
@@ -903,6 +911,7 @@ void initiateGame() {
   player2.shipsLeftToPlace = 4;
   player2.isReady = false;
   player2.pressedStart = false;
+  player2.wantsToRestart = false;
   player2.X_PIN = X_PIN2;
   player2.Y_PIN = Y_PIN2;
   player2.PLACE_PIN = PLACING_PIN2;
@@ -944,6 +953,27 @@ void initiateGame() {
   // retinem prima nava ce trebuie plasata
   player1.shipToBePlaced = player1.ships[0];
   player2.shipToBePlaced = player2.ships[0];
+
+  lcd1stPlayer.clear();
+  lcd1stPlayer.setCursor(1, 0);
+  lcd1stPlayer.print("Press the left");
+  lcd1stPlayer.setCursor(0, 1);
+  lcd1stPlayer.print("button to begin");
+  lcd2ndPlayer.clear();
+  lcd2ndPlayer.setCursor(1, 0);
+  lcd2ndPlayer.print("Press the left");
+  lcd2ndPlayer.setCursor(0, 1);
+  lcd2ndPlayer.print("button to begin");
+  setMatrixTo0(shipsMap1stPlayer);
+  setMatrixTo0(shipsMap2ndPlayer);
+  setMatrixTo0(hitMap1stPlayer);
+  setMatrixTo0(hitMap2ndPlayer);
+}
+
+void setMatrixTo0(byte matrix[][8]) {
+  for (int i = 0; i < 8; i++)
+    for (int j = 0; j < 8; j++)
+      matrix[i][j] = 0;
 }
 
 // functie pentru stingerea completa a unei matrici
@@ -999,6 +1029,19 @@ void waitForOtherPlayer(LiquidCrystal lcd, int playerNr) {
   lcd.setCursor(4, 1);
   lcd.print("Player ");
   lcd.print(playerNr);
+}
+
+void gameFinished() {
+  lcd1stPlayer.clear();
+  lcd1stPlayer.setCursor(1, 0);
+  lcd1stPlayer.print("Press the left");
+  lcd1stPlayer.setCursor(0, 1);
+  lcd1stPlayer.print("button to restart");
+  lcd2ndPlayer.clear();
+  lcd2ndPlayer.setCursor(1, 0);
+  lcd2ndPlayer.print("Press the left");
+  lcd2ndPlayer.setCursor(0, 1);
+  lcd2ndPlayer.print("button to restart");
 }
 
 // functie pentru afisarea textului de start
@@ -1144,7 +1187,7 @@ void readTargetCoords(player *plr) {
 }
 
 // functie ce verifica daca jucatorul vrea sa inceapa jocul
-void checkIfPlayerWantsToStart(player *plr, LiquidCrystal lcd) {
+void checkIfPlayerWantsToStart(player *plr) {
   int startOrNot = digitalRead(plr->PLACE_PIN);
 
   if (startOrNot != plr->lastPlaceBtnState)
@@ -1161,6 +1204,25 @@ void checkIfPlayerWantsToStart(player *plr, LiquidCrystal lcd) {
     }
   }
   plr->lastPlaceBtnState = startOrNot;
+}
+
+// functie ce verifica daca jucatorul vrea sa joace din nou
+void checkIfPlayerWantsToRestart(player *plr) {
+  int restartOrNot = digitalRead(plr->PLACE_PIN);
+
+  if (restartOrNot != plr->lastPlaceBtnState)
+    lastDebounceTime = millis();
+
+  if (millis() - lastDebounceTime > debounceDelay) {
+    if (restartOrNot != plr->placeBtnState) {
+      plr->placeBtnState = restartOrNot;
+      if (plr->placeBtnState == HIGH) {
+        plr->wantsToRestart = true;
+        Serial.println("Player wants to restart.");
+      }
+    }
+  }
+  plr->lastPlaceBtnState = restartOrNot;
 }
 
 /* functie ce verifica daca jucatorul doreste sa roteasca nava curenta
@@ -1235,7 +1297,6 @@ void checkRotatingButton(player *plr, LiquidCrystal lcd) {
       }
     }
   }
-
   plr->lastRotateBtnState = rotateOrNot;
 }
 
@@ -1349,19 +1410,10 @@ void setup() {
 
   //initializare lcd
   lcd1stPlayer.begin(16, 2);
-  lcd1stPlayer.clear();
-  lcd1stPlayer.setCursor(1, 0);
   lcd2ndPlayer.begin(16, 2);
-  lcd2ndPlayer.clear();
-  lcd2ndPlayer.setCursor(1, 0);
   analogWrite(V0_PIN1, 100);
   analogWrite(V0_PIN2, 120);
-  lcd1stPlayer.print("Press the left");
-  lcd1stPlayer.setCursor(0, 1);
-  lcd1stPlayer.print("button to begin");
-  lcd2ndPlayer.print("Press the left");
-  lcd2ndPlayer.setCursor(0, 1);
-  lcd2ndPlayer.print("button to begin");
+
   //initializez pinii
   pinMode(X_PIN1, INPUT);
   pinMode(Y_PIN1, INPUT);
@@ -1405,7 +1457,7 @@ void loop() {
 
   if (millis() > delay1stPlayer + period && (!player1.pressedStart || !player2.pressedStart)) {
     delay1stPlayer = millis();
-    checkIfPlayerWantsToStart(&player1, lcd1stPlayer);
+    checkIfPlayerWantsToStart(&player1);
   }
   else if (player1.pressedStart && !player2.pressedStart) {
     delay1stPlayer = millis();
@@ -1414,7 +1466,7 @@ void loop() {
 
   if (millis() > delay2ndPlayer + period && (!player1.pressedStart || !player2.pressedStart)) {
     delay2ndPlayer = millis();
-    checkIfPlayerWantsToStart(&player2, lcd2ndPlayer);
+    checkIfPlayerWantsToStart(&player2);
   }
   else if (player2.pressedStart && !player1.pressedStart) {
     delay2ndPlayer = millis();
@@ -1475,30 +1527,43 @@ void loop() {
     checkTargetButton(&player2, shipsMap1stPlayer, hitMap2ndPlayer, lcd2ndPlayer, 1);
   }
 
-  if (player1.targetsLeft == 0 && player2.targetsLeft > 0) {
-    lcd1stPlayer.clear();
-    lcd1stPlayer.setCursor(1, 0);
-    lcd1stPlayer.print("Player 1 wins");
-    lcd2ndPlayer.clear();
-    lcd2ndPlayer.setCursor(1, 0);
-    lcd2ndPlayer.print("Player 1 wins");
+  if (player1.targetsLeft == 0 && player2.targetsLeft > 0 && gameStarted) {
+    gameFinished();
     Serial.println("Game finished. Player 1 wins.");
     printMatrix(lc1stPlayer, youWon);
     printMatrix(lc2ndPlayer, youLost);
     victorySound();
     gameStarted = 0;
   }
-  else if (player2.targetsLeft == 0 && player1.targetsLeft > 0) {
-    lcd1stPlayer.clear();
-    lcd1stPlayer.setCursor(1, 0);
-    lcd1stPlayer.print("Player 2 wins");
-    lcd2ndPlayer.clear();
-    lcd2ndPlayer.setCursor(1, 0);
-    lcd2ndPlayer.print("Player 2 wins");
+  else if (player2.targetsLeft == 0 && player1.targetsLeft > 0 && gameStarted) {
+    gameFinished();
     Serial.println("Game finished. Player 2 wins.");
-    printMatrix(lc1stPlayer, youWon);
-    printMatrix(lc2ndPlayer, youLost);
+    printMatrix(lc2ndPlayer, youWon);
+    printMatrix(lc1stPlayer, youLost);
     victorySound();
     gameStarted = 0;
   }
+
+  if (millis() > delay1stPlayer + period && (player1.targetsLeft == 0 || player2.targetsLeft == 0)) {
+    delay1stPlayer = millis();
+    checkIfPlayerWantsToRestart(&player1);
+  }
+  else if (player1.wantsToRestart && !player2.wantsToRestart) {
+    delay1stPlayer = millis();
+    waitForOtherPlayer(lcd1stPlayer, 2);
+  }
+
+  if (millis() > delay2ndPlayer + period && (player1.targetsLeft == 0 || player2.targetsLeft == 0)) {
+    delay2ndPlayer = millis();
+    checkIfPlayerWantsToRestart(&player2);
+  }
+  else if (player2.wantsToRestart && !player1.wantsToRestart) {
+    delay2ndPlayer = millis();
+    waitForOtherPlayer(lcd2ndPlayer, 1);
+  }
+
+  if (player1.wantsToRestart && player2.wantsToRestart) {
+    initiateGame();
+  }
+
 }
