@@ -18,6 +18,7 @@ LedControl lc2ndPlayer = LedControl(12, 11, 10, 1);
 LiquidCrystal lcd1stPlayer(43, 45, 47, 49, 51, 53);
 LiquidCrystal lcd2ndPlayer(2, 3, 4, 5, 6, 7);
 
+// harta cu navele primului jucator
 byte shipsMap1stPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -27,7 +28,7 @@ byte shipsMap1stPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
-
+// harta pe care tinteste primul jucator
 byte hitMap1stPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -37,7 +38,8 @@ byte hitMap1stPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
-
+ 
+// harta celui de-al doilea jucator
 byte shipsMap2ndPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -48,6 +50,7 @@ byte shipsMap2ndPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
 
+// harta pe care tinteste al doilea jucator
 byte hitMap2ndPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -58,6 +61,7 @@ byte hitMap2ndPlayer[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
 
+// imagine afisata pentru cel care castiga
 byte youWon[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 1, 0, 0, 1, 0, 0},
   {0, 0, 1, 0, 0, 1, 0, 0},
@@ -68,6 +72,7 @@ byte youWon[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
 
+// imagine afisata pentru cel care pierde
 byte youLost[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 1, 0, 0, 1, 0, 0},
   {0, 0, 1, 0, 0, 1, 0, 0},
@@ -78,7 +83,8 @@ byte youLost[8][8] = {{0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-const byte IMAGES[][8] = {
+// scrisul de la inceputul jocului, "Battleships"
+const byte mainMenuText[][8] = {
   {
     B11111100,
     B01100110,
@@ -829,7 +835,7 @@ const byte IMAGES[][8] = {
   }
 };
 
-const int IMAGES_LEN = sizeof(IMAGES) / 8;
+const int mainMenuText_length = sizeof(mainMenuText) / 8;
 
 struct point {
   int x, y;
@@ -879,6 +885,8 @@ unsigned long debounceDelay = 50;
 player player1, player2;
 ship nava;
 
+/* functie ce initializeaza marea majoritate a variabilelor, folosita la
+inceperea jocului si cand se da restart */
 void initiateGame() {
   imageLine1stPlayer = 0;
   imageLine2ndPlayer = 0;
@@ -927,21 +935,21 @@ void initiateGame() {
   player2.targetsLeft = 4 + 3 + 2 + 2; // suma lungimilor navelor
   player2.ships = new ship[4];
 
-  // creez prima nava, cu lengtha de 4 patratele
+  // creez prima nava, cu lungimea de 4 patratele
   nava.length = 4;
   nava.coords = new point[4];
   setCoords(&nava, player1.newX, player1.newY);
   player1.ships[0] = nava;
   player2.ships[0] = nava;
 
-  // creez a doua nava, cu lengtha de 3 patratele
+  // creez a doua nava, cu lungimea de 3 patratele
   nava.length = 3;
   nava.coords = new point[3];
   setCoords(&nava, player1.newX, player1.newY);
   player1.ships[1] = nava;
   player2.ships[1] = nava;
 
-  // creez a treia si a patra nava, ambele avand lengtha de 2 patratele
+  // creez a treia si a patra nava, ambele avand lungimea de 2 patratele
   nava.length = 2;
   nava.coords = new point[2];
   setCoords(&nava, player1.newX, player1.newY);
@@ -970,6 +978,7 @@ void initiateGame() {
   setMatrixTo0(hitMap2ndPlayer);
 }
 
+// functie pentru golirea unei matrici
 void setMatrixTo0(byte matrix[][8]) {
   for (int i = 0; i < 8; i++)
     for (int j = 0; j < 8; j++)
@@ -990,6 +999,8 @@ void printMatrix(LedControl lc, byte model[][8]) {
       lc.setLed(0, i, j, model[i][j]);
 }
 
+// functie folosita la trecerea de la un stadiu al jocului la celalalt
+// trece de la meniul principal la plasarea navelor de catre jucatori
 void startGame() {
   lcd1stPlayer.clear();
   lcd1stPlayer.setCursor(0, 0);
@@ -1000,6 +1011,8 @@ void startGame() {
   playersPressedStart = true;
 }
 
+// functie folosita la trecerea de la un stadiu al jocului la celalalt
+// trece de la plasarea navelor la etapa de lupta intre jucatori
 void beginAttacking() {
   clearMatrix(lc1stPlayer);
   clearMatrix(lc2ndPlayer);
@@ -1022,6 +1035,7 @@ void beginAttacking() {
   player2.isReady = false;
 }
 
+// functie folosita cand asteptam raspuns de la un jucator
 void waitForOtherPlayer(LiquidCrystal lcd, int playerNr) {
   lcd.clear();
   lcd.setCursor(2, 0);
@@ -1053,6 +1067,7 @@ void displayImage(const byte* image, LedControl lc) {
   }
 }
 
+// functie pentru a activa buzzer-ul cand o nava este lovita
 void targetHit() {
   tone(buzzer, 600);
   noTone(buzzer);
@@ -1076,6 +1091,7 @@ void victorySound() {
   delay(1000);
   noTone(buzzer);
 }
+
 /* functie ce seteaza coordonatele navei primite ca parametru,
    unde x si y sunt coordonatele capului navei */
 void setCoords(ship *nav, int x, int y) {
@@ -1443,40 +1459,46 @@ void setup() {
 }
 
 void loop() {
+  // afisam "Battleships" pe ecranul primului jucator
   if (millis() > delay1stPlayer + 100 && !player1.pressedStart) {
-    displayImage(IMAGES[imageLine1stPlayer], lc1stPlayer);
-    if (++imageLine1stPlayer >= IMAGES_LEN)
+    displayImage(mainMenuText[imageLine1stPlayer], lc1stPlayer);
+    if (++imageLine1stPlayer >= mainMenuText_length)
       imageLine1stPlayer = 0;
   }
 
+  // afisam "Battleships" pe ecranul celui de-al doilea jucator
   if (millis() > delay2ndPlayer + 100 && !player2.pressedStart) {
-    displayImage(IMAGES[imageLine2ndPlayer], lc2ndPlayer);
-    if (++imageLine2ndPlayer >= IMAGES_LEN)
+    displayImage(mainMenuText[imageLine2ndPlayer], lc2ndPlayer);
+    if (++imageLine2ndPlayer >= mainMenuText_length)
       imageLine2ndPlayer = 0;
   }
 
+  // verificam daca primul jucator vrea sa inceapa jocul
   if (millis() > delay1stPlayer + period && (!player1.pressedStart || !player2.pressedStart)) {
     delay1stPlayer = millis();
     checkIfPlayerWantsToStart(&player1);
-  }
+  } // daca vrea, asteptam raspuns de la celalalt
   else if (player1.pressedStart && !player2.pressedStart) {
     delay1stPlayer = millis();
     waitForOtherPlayer(lcd1stPlayer, 2);
   }
 
+  // verificam daca al doilea jucator vrea sa inceapa jocul
   if (millis() > delay2ndPlayer + period && (!player1.pressedStart || !player2.pressedStart)) {
     delay2ndPlayer = millis();
     checkIfPlayerWantsToStart(&player2);
-  }
+  } // daca vrea, asteptam raspuns de la celalalt
   else if (player2.pressedStart && !player1.pressedStart) {
     delay2ndPlayer = millis();
     waitForOtherPlayer(lcd2ndPlayer, 1);
   }
 
+  // daca cei doi jucatori vor sa inceapa, se trece la etapa de plasare a navelor
   if (!playersPressedStart && player1.pressedStart && player2.pressedStart) {
     startGame();
   }
 
+  // primul jucator isi plaseaza navele
   if (millis() > delay1stPlayer + period && player1.shipsLeftToPlace > 0 && !player1.isReady && playersPressedStart) {
     delay1stPlayer = millis();
     printShipsMap(shipsMap1stPlayer, lc1stPlayer);
@@ -1491,6 +1513,7 @@ void loop() {
     }
   }
 
+  // al doilea jucator isi plaseaza navele
   if (millis() > delay2ndPlayer + period && player2.shipsLeftToPlace > 0 && !player2.isReady && playersPressedStart) {
     delay2ndPlayer = millis();
     printShipsMap(shipsMap2ndPlayer, lc2ndPlayer);
@@ -1505,10 +1528,13 @@ void loop() {
     }
   }
 
+  // daca jucatorii au terminat de plasat navele, se trece la urmatoarea etapa,
+  //  cea de lupta intre jucatori
   if (!gameStarted && player1.isReady && player2.isReady) {
     beginAttacking();
   }
 
+  // primul jucator ataca
   if (millis() > delay1stPlayer + period && gameStarted && player1.targetsLeft > 0 && turn == 1) {
     delay1stPlayer = millis();
     printHitMap(hitMap1stPlayer, lc1stPlayer);
@@ -1518,6 +1544,7 @@ void loop() {
     checkTargetButton(&player1, shipsMap2ndPlayer, hitMap1stPlayer, lcd1stPlayer, 0);
   }
 
+  // al doilea jucator ataca
   if (millis() > delay2ndPlayer + period && gameStarted && player2.targetsLeft > 0 && turn == 2) {
     delay2ndPlayer = millis();
     printHitMap(hitMap2ndPlayer, lc2ndPlayer);
@@ -1527,6 +1554,7 @@ void loop() {
     checkTargetButton(&player2, shipsMap1stPlayer, hitMap2ndPlayer, lcd2ndPlayer, 1);
   }
 
+  // verificam daca vreun jucator a scufundat toate navele celuilalt
   if (player1.targetsLeft == 0 && player2.targetsLeft > 0 && gameStarted) {
     gameFinished();
     Serial.println("Game finished. Player 1 wins.");
@@ -1543,27 +1571,29 @@ void loop() {
     victorySound();
     gameStarted = 0;
   }
-
+	
+  // verificam daca primul jucator vrea sa joace din nou
   if (millis() > delay1stPlayer + period && (player1.targetsLeft == 0 || player2.targetsLeft == 0)) {
     delay1stPlayer = millis();
     checkIfPlayerWantsToRestart(&player1);
-  }
+  } // daca vrea, asteptam raspuns de la celalalt
   else if (player1.wantsToRestart && !player2.wantsToRestart) {
     delay1stPlayer = millis();
     waitForOtherPlayer(lcd1stPlayer, 2);
   }
 
+  // verificam daca al doilea jucator vrea sa joace din nou
   if (millis() > delay2ndPlayer + period && (player1.targetsLeft == 0 || player2.targetsLeft == 0)) {
     delay2ndPlayer = millis();
     checkIfPlayerWantsToRestart(&player2);
-  }
+  } // daca vrea, asteptam raspuns de la celalalt
   else if (player2.wantsToRestart && !player1.wantsToRestart) {
     delay2ndPlayer = millis();
     waitForOtherPlayer(lcd2ndPlayer, 1);
   }
 
+  // daca amandoi vor sa dea restart, reinitializam variabilele si revenim la meniul principal
   if (player1.wantsToRestart && player2.wantsToRestart) {
     initiateGame();
   }
-
 }
