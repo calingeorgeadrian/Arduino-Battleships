@@ -3,6 +3,8 @@
 # Game Description
 Battleships is a guessing game for two players. It is played on ruled grids on which each player's fleet of ships are marked. The locations of the fleets are concealed from the other player. Players alternate turns taking "shots" at the other player's ships, and the objective of the game is to destroy the opposing player's fleet.  
   
+  
+You can see a video presentation of the project [here](https://www.youtube.com/watch?v=3p0HKMFZQNk).  
 # How to Play
 When the Arduino is turned on, both players will be greeted with the message "Press the left button to begin". After both players press the buttons, they can start placing their ships.
   
